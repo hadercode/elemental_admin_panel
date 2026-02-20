@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full transition-colors duration-500">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elemental V2.0 | Next-Gen Ops Dashboard</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+        // CONFIGURACIÓN CENTRALIZADA V2.0
+        const CONFIG = {
+            sidebarWidth: '300px',
+            collapsedWidth: '88px',
+            accents: {
+                indigo: { base: '#6366f1', soft: '#6366f110', hover: '#4f46e5', grad: 'from-indigo-600 to-violet-600' },
+                emerald: { base: '#10b981', soft: '#10b98110', hover: '#059669', grad: 'from-emerald-500 to-teal-600' },
+                rose: { base: '#f43f5e', soft: '#f43f5e10', hover: '#e11d48', grad: 'from-rose-500 to-pink-600' },
+                amber: { base: '#f59e0b', soft: '#f59e0b10', hover: '#d97706', grad: 'from-amber-400 to-orange-500' },
+                slate: { base: '#475569', soft: '#47556910', hover: '#334155', grad: 'from-slate-600 to-slate-800' }
+            },
+            menuItems: [
+                { id: 'dashboard', label: 'Dashboard', icon: 'layout-grid' },
+                {
+                    id: 'ventas',
+                    label: 'Ventas',
+                    icon: 'shopping-bag',
+                    subMenu: [
+                        { label: 'Pedidos Real-time', link: '#' },
+                        { label: 'Cartera Clientes', link: '#' },
+                        { label: 'Análisis IA', link: '#' }
+                    ]
+                },
+                {
+                    id: 'compras',
+                    label: 'Compras',
+                    icon: 'truck',
+                    subMenu: [
+                        { label: 'Proveedores', link: '#' },
+                        { label: 'Sourcing', link: '#' }
+                    ]
+                },
+                { id: 'inventario', label: 'Inventario', icon: 'box' },
+                { id: 'usuarios', label: 'Seguridad', icon: 'shield-check' },
+                { id: 'config', label: 'Ajustes Engine', icon: 'command' }
+            ]
+        };
+
+        const UI_STATE = {
+            isSidebarCollapsed: false,
+            sidebarPosition: 'left',
+            headerPosition: 'fixed',
+            activeMenu: 'dashboard',
+            openSubMenus: [],
+            themeMode: 'light',
+            accentColor: 'indigo',
+            isNotificationsOpen: false,
+            isProfileOpen: false,
+            isSettingsOpen: false,
+            searchFocus: false
+        };
+
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        accent: {
+                            DEFAULT: 'var(--accent-color)',
+                            soft: 'var(--accent-soft)',
+                            hover: 'var(--accent-hover)'
+                        },
+                        slate: {
+                            950: '#020617',
+                        }
+                    },
+                    boxShadow: {
+                        'layer': '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02)',
+                        'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
+                    }
+                }
+            }
+        };
+    </script>
+
+    <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
+
+<body
+    class="h-full bg-[#f8fafc] dark:bg-slate-950 text-slate-800 dark:text-slate-200 font-sans selection:bg-accent selection:text-white transition-colors duration-500 overflow-hidden">
+
+    <!-- NOTIFICATION DRAWER -->
+    <div id="drawer-overlay"
+        class="fixed inset-0 bg-slate-950/20 backdrop-blur-sm z-50 hidden opacity-0 transition-opacity duration-300"
+        onclick="toggleDrawer()">
+    </div>
+    <aside id="notif-drawer"
+        class="fixed top-0 right-0 h-full w-96 bg-white dark:bg-slate-900 shadow-2xl z-[60] drawer-transform p-8 border-l border-slate-100 dark:border-slate-800">
+        <div class="flex items-center justify-between mb-10">
+            <h2 class="text-xl font-bold tracking-tight uppercase">Actividad Reciente</h2>
+            <button onclick="toggleDrawer()"
+                class="p-2 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-full text-slate-400">
+                <i data-lucide="x"></i>
+            </button>
+        </div>
+        <div class="space-y-6">
+            <div
+                class="flex gap-4 p-4 rounded-3xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                <div
+                    class="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600">
+                    <i data-lucide="shopping-cart" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold">Venta registrada</p>
+                    <p class="text-xs text-slate-500 mt-1">Pedido #OC-292 ha sido aprobado por logística.</p>
+                    <span class="text-[10px] text-slate-400 mt-2 block font-bold uppercase">Hace 2 minutos</span>
+                </div>
+            </div>
+            <div class="flex gap-4 p-4 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">
+                <div
+                    class="w-10 h-10 rounded-2xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-600">
+                    <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <p class="text-sm font-bold">Stock crítico</p>
+                    <p class="text-xs text-slate-500 mt-1">Quedan menos de 5 unidades de MacBook Pro M3.</p>
+                </div>
+            </div>
+        </div>
+        <button
+            class="absolute bottom-8 left-8 right-8 py-4 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-3xl text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-all">Priorizar
+            Tareas</button>
+    </aside>
+
+    <div id="app-layout" class="flex h-full flex-row">
+
+        <!-- SIDEBAR -->
+        <aside id="sidebar"
+            class="bg-white dark:bg-slate-900 border-r border-slate-100 dark:border-slate-800 h-full flex flex-col sidebar-transition z-40 relative shadow-layer dark:shadow-none"
+            style="width: 300px;">
+            <div class="h-24 flex items-center px-8">
+                <div class="flex items-center gap-4" id="sidebar-logo">
+                    <div
+                        class="w-11 h-11 flex-shrink-0 logo-gradient rounded-2xl flex items-center justify-center text-white font-black shadow-xl shadow-indigo-200 dark:shadow-none italic tracking-tighter border-b-2 border-white/20">
+                        E</div>
+                    <span id="brand-name"
+                        class="font-black text-xl tracking-[0.1em] text-slate-900 dark:text-white uppercase">Elemental</span>
+                </div>
+            </div>
+
+            <nav id="nav-container" class="flex-grow px-4 py-6 space-y-1.5 overflow-y-auto custom-scrollbar">
+                <!-- Dynamic Menu with elastic logic -->
+            </nav>
+
+            <footer class="p-6">
+                <div
+                    class="user-card-pro flex items-center gap-4 p-3 rounded-[2rem] bg-white/40 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 overflow-hidden relative shadow-sm">
+                    <div class="relative">
+                        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="User"
+                            class="w-11 h-11 rounded-full border-2 border-white dark:border-slate-900 bg-white">
+                        <div class="status-dot status-dot-pulse absolute bottom-0 right-0"></div>
+                    </div>
+                    <div id="footer-user-info" class="transition-opacity duration-300">
+                        <p class="text-xs font-bold text-slate-900 dark:text-white leading-none">Architect Prime</p>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-tighter mt-1 block">Senior
+                            Lead UX</span>
+                    </div>
+                </div>
+            </footer>
+        </aside>
+
+        <!-- MAIN VIEW -->
+        <div id="main-view" class="flex-grow flex flex-col h-full relative overflow-y-auto overflow-x-hidden">
+
+            <!-- UNIFIED HEADER & TOOLBAR -->
+            <header id="app-header"
+                class="fixed top-0 right-0 left-0 h-24 flex items-center px-8 z-50 bg-transparent transition-all pointer-events-none">
+                <div id="toolbar-v2"
+                    class="w-full flex items-center justify-between glass-card p-4 rounded-[2.5rem] shadow-layer border-b border-[#F1F5F9]/50 relative pointer-events-auto">
+
+                    <div class="flex items-center gap-4">
+                        <!-- Sidebar Toggle -->
+                        <button onclick="toggleSidebar()"
+                            class="w-10 h-10 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full text-slate-400 transition-all active:scale-95 border border-transparent hover:border-slate-200 dark:hover:border-slate-700">
+                            <i data-lucide="panels-top-left" class="w-4 h-4"></i>
+                        </button>
+
+                        <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-1"></div>
+
+                        <!-- Breadcrumbs & Sync -->
+                        <nav id="breadcrumbs"
+                            class="flex items-center gap-1.5 px-1.5 py-1.5 bg-slate-100/30 dark:bg-slate-800/20 rounded-full border border-slate-200/30 dark:border-slate-700/30">
+                            <a href="#"
+                                class="p-2 text-slate-400 hover:text-accent hover:bg-white dark:hover:bg-slate-700 rounded-full transition-all"
+                                title="Inicio">
+                                <i data-lucide="home" class="w-3.5 h-3.5"></i>
+                            </a>
+                            <i data-lucide="chevron-right" class="w-3 h-3 text-slate-300"></i>
+                            <button
+                                class="px-4 py-1.5 bg-white dark:bg-slate-700 shadow-sm border border-slate-100 dark:border-slate-600 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-200 hover:bg-slate-50 transition-all">
+                                <span id="breadcrumb-active">Dashboard</span>
+                            </button>
+                        </nav>
+
+                        <div class="flex items-center gap-3 ml-2">
+                            <div class="sync-pulse">
+                                <span class="ping"></span>
+                                <span class="dot"></span>
+                            </div>
+                            <span class="text-[9px] font-mono font-bold text-slate-400 uppercase tracking-tighter">Live
+                                Sync Active</span>
+                        </div>
+                    </div>
+
+                    <!-- SEARCH BAR (Now in toolbar) -->
+                    <div class="hidden xl:block relative group">
+                        <div id="search-container"
+                            class="flex items-center bg-slate-100/50 dark:bg-slate-800/30 rounded-2xl px-4 py-2 transition-all duration-300 border border-transparent focus-within:border-accent/30 focus-within:bg-white dark:focus-within:bg-slate-800 focus-within:shadow-xl focus-within:w-[350px] w-64">
+                            <i data-lucide="search" class="text-slate-400 w-4 h-4 mr-3"></i>
+                            <input type="text" placeholder="Comandos..."
+                                class="bg-transparent border-none text-[11px] font-semibold outline-none w-full dark:text-slate-200">
+                            <span
+                                class="ml-2 px-1.5 py-0.5 bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded text-[9px] text-slate-400 font-bold opacity-70 group-focus-within:opacity-100 transition-opacity whitespace-nowrap">
+                                CMD K
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <!-- Module actions -->
+                        <div id="module-actions" class="hidden xl:flex items-center gap-2 mr-2">
+
+                            <button
+                                class="px-5 py-2.5 primary-btn-premium text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg flex items-center gap-2 relative group">
+                                <span id="primary-action-expand">
+                                    <i data-lucide="expand" class="w-4 h-4"></i>
+                                </span>
+                            </button>
+                        </div>
+
+                        <div class="h-6 w-px bg-slate-200 dark:bg-slate-700"></div>
+
+                        <!-- Notification -->
+                        <button onclick="toggleDrawer()"
+                            class="p-2.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl relative transition-all group">
+                            <i data-lucide="bell" class="w-4.5 h-4.5 group-hover:rotate-12 transition-transform"></i>
+                            <span
+                                class="absolute top-2.5 right-2.5 w-2 h-2 bg-accent rounded-full border-2 border-white dark:border-slate-900 shadow-sm"></span>
+                        </button>
+
+                        <!-- User Profile -->
+                        <div class="relative">
+                            <button onclick="toggleDropdown('profile')"
+                                class="flex items-center gap-2 p-1 bg-slate-50 dark:bg-slate-800 shadow-sm border border-slate-200/50 dark:border-slate-700/50 rounded-2xl hover:border-accent transition-all group overflow-hidden">
+                                <div
+                                    class="w-9 h-9 rounded-xl bg-slate-950 dark:bg-accent flex items-center justify-center text-white font-black text-xs transition-transform group-hover:scale-105">
+                                    AA
+                                </div>
+                                <i data-lucide="chevron-down"
+                                    class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-600 transition-transform"></i>
+                            </button>
+
+                            <!-- PROFILE DROPDOWN MENU -->
+                            <div id="profile-dropdown"
+                                class="absolute right-0 mt-3 w-56 glass-card rounded-[2rem] shadow-2xl p-2 hidden animate-dropdown z-50">
+                                <div class="px-4 py-3 border-b border-slate-100 dark:border-slate-800 mb-2">
+                                    <p
+                                        class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">
+                                        Lead Designer</p>
+                                    <p class="text-xs font-black text-slate-900 dark:text-white">Architect Prime</p>
+                                </div>
+                                <div class="grid grid-cols-1 gap-1">
+                                    <a href="#"
+                                        class="flex items-center gap-3 p-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl text-[10px] font-bold text-slate-600 dark:text-slate-400 transition-all">
+                                        <i data-lucide="user" class="w-3.5 h-3.5"></i> Perfil
+                                    </a>
+                                    <a href="#"
+                                        onclick="toggleDropdown('settings'); toggleDropdown('profile'); return false;"
+                                        class="flex items-center gap-3 p-2.5 hover:bg-slate-50 dark:hover:bg-slate-800/50 rounded-xl text-[10px] font-bold text-slate-600 dark:text-slate-400 transition-all">
+                                        <i data-lucide="sliders" class="w-3.5 h-3.5"></i> Preferencias
+                                    </a>
+                                    <hr class="my-1.5 border-slate-100 dark:border-slate-800 mx-1">
+                                    <a href="#"
+                                        class="flex items-center gap-3 p-2.5 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-xl text-[10px] font-black text-rose-600 transition-all">
+                                        <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Cerrar Sesión
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Invisible Progress Bar -->
+                    <div class="invisible-progress"></div>
+                </div>
+            </header>
+
+            <!-- MAIN VIEWPORT -->
+            <main class="pt-28 pb-8 px-8 space-y-8">
+
+                <!-- KPI GRID Evolution (Image Sync) -->
+                <div class="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-4 gap-6">
+                    <!-- KPI Card -->
+                    <div
+                        class="glass-card kpi-container group p-6 rounded-[2.5rem] shadow-layer hover:shadow-2xl transition-all duration-500 cursor-default relative overflow-hidden flex flex-col gap-6 min-h-[280px]">
+
+                        <!-- Left Content Area -->
+                        <div class="flex-grow flex flex-col relative z-10">
+                            <!-- Dual Trend Icons & Badge -->
+                            <div class="flex justify-between items-start mb-8">
+                                <div
+                                    class="flex items-center gap-1.5 p-1 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                    <div class="p-2.5 bg-card text-emerald-500 rounded-xl shadow-sm">
+                                        <i data-lucide="trending-up" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="p-2.5 text-rose-500">
+                                        <i data-lucide="trending-down" class="w-4 h-4 opacity-50"></i>
+                                    </div>
+                                </div>
+                                <span
+                                    class="text-[11px] font-black px-4 py-1.5 bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400 rounded-full uppercase tracking-tighter transition-all group-hover:scale-105">+12.5%</span>
+                            </div>
+
+                            <!-- Titles & Sub-context -->
+                            <div class="space-y-1 mb-8">
+                                <h3 class="text-sm font-black text-slate-900 dark:text-white leading-tight">Ingresos
+                                    Brutos</h3>
+                                <div
+                                    class="inline-flex items-center gap-2 px-2.5 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">vs. mes
+                                        anterior</span>
+                                    <span class="text-[9px] font-black text-rose-500">-15%</span>
+                                </div>
+                            </div>
+
+                            <!-- Value Display -->
+                            <div class="mt-auto">
+                                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-2">
+                                    INGRESOS BRUTOS</h4>
+                                <p
+                                    class="text-6xl font-black text-slate-950 dark:text-white tracking-tighter leading-none">
+                                    $45.2K</p>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel Area (Metrios) -->
+                        <div class="flex-shrink-0 flex flex-col justify-center items-end relative z-10">
+                            <div class="metrios-panel space-y-3 group/panel">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span
+                                        class="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Metrios</span>
+                                    <i data-lucide="settings" class="w-3.5 h-3.5 text-slate-400"></i>
+                                </div>
+                                <ul class="space-y-1.5 border-t border-slate-50 dark:border-slate-800 pt-3">
+                                    <li
+                                        class="flex items-center gap-2 text-[9px] font-bold text-slate-500 hover:text-accent cursor-pointer transition-colors px-1">
+                                        Ver detalles</li>
+                                    <li
+                                        class="flex items-center gap-2 text-[9px] font-bold text-slate-500 hover:text-accent cursor-pointer transition-colors px-1">
+                                        Exportar data</li>
+                                    <li
+                                        class="flex items-center gap-2 text-[9px] font-bold text-slate-500 hover:text-accent cursor-pointer transition-colors px-1">
+                                        Cambiar periodo</li>
+                                </ul>
+                                <button
+                                    class="w-full py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-transform active:scale-95 shadow-lg shadow-emerald-500/10">Alpine_js</button>
+                            </div>
+                        </div>
+
+                        <!-- Sparkline Background (Jagged) -->
+                        <div class="sparkline-jagged pointer-events-none">
+                            <svg viewBox="0 0 100 30" preserveAspectRatio="none"
+                                class="w-full h-full stroke-emerald-500 fill-none stroke-[1.5]">
+                                <path
+                                    d="M0,25 L10,22 L15,28 L25,18 L35,22 L45,12 L55,20 L65,10 L75,18 L85,8 L95,15 L100,10" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- KPI Card 2 -->
+                    <div
+                        class="glass-card kpi-container group p-6 rounded-[2.5rem] shadow-layer hover:shadow-2xl transition-all duration-500 cursor-default relative overflow-hidden flex flex-col gap-6 min-h-[280px]">
+                        <div class="flex-grow flex flex-col relative z-10">
+                            <div class="flex justify-between items-start mb-8">
+                                <div
+                                    class="flex items-center gap-1.5 p-1 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                    <div class="p-2.5 bg-card text-teal-500 rounded-xl shadow-sm">
+                                        <i data-lucide="users" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="p-2.5 text-slate-300">
+                                        <i data-lucide="arrow-right" class="w-4 h-4 opacity-50"></i>
+                                    </div>
+                                </div>
+                                <span
+                                    class="text-[11px] font-black px-4 py-1.5 bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 rounded-full uppercase tracking-tighter">Estable</span>
+                            </div>
+                            <div class="space-y-1 mb-8">
+                                <h3 class="text-sm font-black text-slate-900 dark:text-white leading-tight">Usuarios
+                                    Activos</h3>
+                                <div
+                                    class="inline-flex items-center gap-2 px-2.5 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                                    <span
+                                        class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Sincronización</span>
+                                    <span class="text-[9px] font-black text-emerald-500">Real-time</span>
+                                </div>
+                            </div>
+                            <div class="mt-auto">
+                                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-2">
+                                    USUARIOS TOTALES</h4>
+                                <p
+                                    class="text-6xl font-black text-slate-950 dark:text-white tracking-tighter leading-none">
+                                    2.4K</p>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0 flex flex-col justify-center items-end relative z-10">
+                            <div class="metrios-panel space-y-3">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span
+                                        class="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Filtros</span>
+                                    <i data-lucide="list-filter" class="w-3.5 h-3.5 text-slate-400"></i>
+                                </div>
+                                <ul class="space-y-1.5 border-t border-slate-50 dark:border-slate-800 pt-3">
+                                    <li
+                                        class="flex items-center gap-2 text-[9px] font-bold text-slate-500 hover:text-accent cursor-pointer transition-colors px-1">
+                                        Sesiones</li>
+                                    <li
+                                        class="flex items-center gap-2 text-[9px] font-bold text-slate-500 hover:text-accent cursor-pointer transition-colors px-1">
+                                        Retención</li>
+                                    <li
+                                        class="flex items-center gap-2 text-[9px] font-bold text-slate-500 hover:text-accent cursor-pointer transition-colors px-1">
+                                        Heatmaps</li>
+                                </ul>
+                                <button
+                                    class="w-full py-2 bg-slate-900 dark:bg-white dark:text-slate-950 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-transform active:scale-95 shadow-lg">Analizar</button>
+                            </div>
+                        </div>
+                        <div class="sparkline-jagged pointer-events-none">
+                            <svg viewBox="0 0 100 30" preserveAspectRatio="none"
+                                class="w-full h-full stroke-teal-500 fill-none stroke-[1.5]">
+                                <path d="M0,15 L20,15 L40,16 L60,14 L80,15 L100,15" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- KPI Card 3: Stock Prime -->
+                    <div
+                        class="glass-card kpi-container group p-6 rounded-[2.5rem] shadow-layer hover:shadow-2xl transition-all duration-500 cursor-default relative overflow-hidden flex flex-col gap-6 min-h-[280px]">
+                        <div class="flex-grow flex flex-col relative z-10">
+                            <div class="flex justify-between items-start mb-8">
+                                <div
+                                    class="flex items-center gap-1.5 p-1 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                    <div class="p-2.5 bg-card text-rose-500 rounded-xl shadow-sm">
+                                        <i data-lucide="package" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="p-2.5 text-slate-300">
+                                        <i data-lucide="archive" class="w-4 h-4 opacity-50"></i>
+                                    </div>
+                                </div>
+                                <span
+                                    class="text-[11px] font-black px-4 py-1.5 bg-rose-50 text-rose-600 dark:bg-rose-900/30 dark:text-rose-400 rounded-full uppercase tracking-tighter">-2.5%</span>
+                            </div>
+                            <div class="space-y-1 mb-8">
+                                <h3 class="text-sm font-black text-slate-900 dark:text-white leading-tight">Stock Prime
+                                </h3>
+                                <div
+                                    class="inline-flex items-center gap-2 px-2.5 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                                    <span
+                                        class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Rotación</span>
+                                    <span class="text-[9px] font-black text-rose-500">Alta</span>
+                                </div>
+                            </div>
+                            <div class="mt-auto">
+                                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-2">
+                                    UNIDADES DISPONIBLES</h4>
+                                <p
+                                    class="text-6xl font-black text-slate-950 dark:text-white tracking-tighter leading-none">
+                                    842</p>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0 flex flex-col justify-center items-end relative z-10">
+                            <div class="metrios-panel space-y-3">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span
+                                        class="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Almacén</span>
+                                    <i data-lucide="box" class="w-3.5 h-3.5 text-slate-400"></i>
+                                </div>
+                                <ul class="space-y-1.5 border-t border-slate-50 dark:border-slate-800 pt-3">
+                                    <li
+                                        class="flex items-center gap-2 text-[9px] font-bold text-slate-500 hover:text-accent cursor-pointer transition-colors px-1">
+                                        Ver Inventario</li>
+                                    <li
+                                        class="flex items-center gap-2 text-[9px] font-bold text-slate-500 hover:text-accent cursor-pointer transition-colors px-1">
+                                        Alertas</li>
+                                    <li
+                                        class="flex items-center gap-2 text-[9px] font-bold text-slate-500 hover:text-accent cursor-pointer transition-colors px-1">
+                                        Proveedores</li>
+                                </ul>
+                                <button
+                                    class="w-full py-2 bg-rose-500 hover:bg-rose-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-transform active:scale-95 shadow-lg shadow-rose-500/10">Reabastecer</button>
+                            </div>
+                        </div>
+                        <div class="sparkline-jagged pointer-events-none">
+                            <svg viewBox="0 0 100 30" preserveAspectRatio="none"
+                                class="w-full h-full stroke-rose-500 fill-none stroke-[1.5]">
+                                <path d="M0,10 L15,15 L30,5 L45,20 L60,10 L75,25 L90,15 L100,5" />
+                            </svg>
+                        </div>
+                    </div>
+
+                    <!-- KPI Card 4: Latencia Core -->
+                    <div
+                        class="glass-card kpi-container group p-6 rounded-[2.5rem] shadow-layer hover:shadow-2xl transition-all duration-500 cursor-default relative overflow-hidden flex flex-col gap-6 min-h-[280px]">
+                        <div class="flex-grow flex flex-col relative z-10">
+                            <div class="flex justify-between items-start mb-8">
+                                <div
+                                    class="flex items-center gap-1.5 p-1 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
+                                    <div class="p-2.5 bg-card text-slate-600 dark:text-slate-400 rounded-xl shadow-sm">
+                                        <i data-lucide="activity" class="w-5 h-5"></i>
+                                    </div>
+                                    <div class="p-2.5 text-slate-300">
+                                        <i data-lucide="zap" class="w-4 h-4 opacity-50"></i>
+                                    </div>
+                                </div>
+                                <span
+                                    class="text-[11px] font-black px-4 py-1.5 bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400 rounded-full uppercase tracking-tighter">Proceso</span>
+                            </div>
+                            <div class="space-y-1 mb-8">
+                                <h3 class="text-sm font-black text-slate-900 dark:text-white leading-tight">Latencia
+                                    Core</h3>
+                                <div
+                                    class="inline-flex items-center gap-2 px-2.5 py-1 bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-100 dark:border-slate-800">
+                                    <span
+                                        class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Estado</span>
+                                    <span class="text-[9px] font-black text-emerald-500">Óptimo</span>
+                                </div>
+                            </div>
+                            <div class="mt-auto">
+                                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-2">
+                                    LATENCIA GLOBAL</h4>
+                                <p
+                                    class="text-6xl font-black text-slate-950 dark:text-white tracking-tighter leading-none">
+                                    14ms</p>
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0 flex flex-col justify-center items-end relative z-10">
+                            <div class="metrios-panel space-y-3">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span
+                                        class="text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-white">Server</span>
+                                    <i data-lucide="server" class="w-3.5 h-3.5 text-slate-400"></i>
+                                </div>
+                                <ul class="space-y-1.5 border-t border-slate-50 dark:border-slate-800 pt-3">
+                                    <li
+                                        class="flex items-center gap-2 text-[9px] font-bold text-slate-500 hover:text-accent cursor-pointer transition-colors px-1">
+                                        Logs</li>
+                                    <li
+                                        class="flex items-center gap-2 text-[9px] font-bold text-slate-500 hover:text-accent cursor-pointer transition-colors px-1">
+                                        Network</li>
+                                    <li
+                                        class="flex items-center gap-2 text-[9px] font-bold text-slate-500 hover:text-accent cursor-pointer transition-colors px-1">
+                                        Regiones</li>
+                                </ul>
+                                <button
+                                    class="w-full py-2 bg-slate-900 dark:bg-white dark:text-slate-950 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-transform active:scale-95 shadow-lg">Diagnosticar</button>
+                            </div>
+                        </div>
+                        <div class="sparkline-jagged pointer-events-none">
+                            <svg viewBox="0 0 100 30" preserveAspectRatio="none"
+                                class="w-full h-full stroke-slate-500 fill-none stroke-[1.5]">
+                                <path d="M0,20 L10,18 L20,22 L30,15 L40,25 L50,10 L60,20 L70,12 L80,18 L90,8 L100,15" />
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- EMPTY STATE V2.0 -->
+                <section
+                    class="glass-card border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-[4rem] p-24 text-center transition-all hover:bg-white dark:hover:bg-slate-900">
+                    <div class="max-w-md mx-auto space-y-8">
+                        <div
+                            class="w-32 h-32 bg-slate-50 dark:bg-slate-800/50 rounded-full flex items-center justify-center mx-auto mb-10 transition-all hover:scale-110 hover:shadow-2xl duration-700 relative group/icon">
+                            <div
+                                class="absolute inset-0 bg-accent/20 rounded-full blur-2xl group-hover/icon:opacity-100 opacity-0 transition-opacity">
+                            </div>
+                            <i data-lucide="compass"
+                                class="w-16 h-16 text-slate-300 dark:text-slate-600 transition-transform group-hover/icon:rotate-45 relative"></i>
+                        </div>
+                        <h3 class="text-3xl font-black text-slate-900 dark:text-white tracking-tighter uppercase">
+                            Navegación Lista</h3>
+                        <p class="text-slate-400 font-bold uppercase tracking-widest text-[10px] leading-relaxed">
+                            Arrastra un módulo aqu o utiliza el atajo de teclado para iniciar una nueva consulta
+                            operativa.</p>
+                        <div class="pt-8">
+                            <button
+                                class="px-8 py-4 bg-accent text-white rounded-3xl text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-accent/20 hover:bg-slate-900 transition-all active:scale-95">Explorar
+                                Módulos</button>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+
+    </div>
+
+    <!-- SETTINGS FAB -->
+    <div class="fixed bottom-10 right-10 z-[70]">
+        <button onclick="toggleDropdown('settings')"
+            class="w-20 h-20 bg-slate-900 dark:bg-white dark:text-slate-900 text-white rounded-[2.5rem] shadow-2xl flex items-center justify-center hover:bg-accent transition-all hover:rotate-90 group active:scale-90 border-4 border-white dark:border-slate-950">
+            <i data-lucide="layers-3" class="w-8 h-8 group-hover:scale-110 transition-transform"></i>
+        </button>
+        <div id="settings-dropdown"
+            class="absolute bottom-24 right-0 w-80 bg-white dark:bg-slate-900 rounded-[3rem] shadow-2xl border border-slate-100 dark:border-slate-800 p-8 hidden animate-dropdown">
+            <h3 class="text-xl font-bold text-slate-900 dark:text-white mb-8 tracking-tighter uppercase">Custom
+                Engine</h3>
+            <div class="space-y-8">
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Acento Premium
+                    </p>
+                    <div class="flex gap-3" id="accent-selector"></div>
+                </div>
+                <div class="space-y-4">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-4">Configuración de
+                        Visualización</p>
+                    <div class="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-800 p-1 rounded-2xl">
+                        <button onclick="setTheme('light')" id="theme-light-btn"
+                            class="py-3 rounded-xl text-[10px] font-bold uppercase transition-all">Luna</button>
+                        <button onclick="setTheme('dark')" id="theme-dark-btn"
+                            class="py-3 rounded-xl text-[10px] font-bold uppercase transition-all">Solar</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-800 p-1 rounded-2xl">
+                        <button onclick="setHeaderPosition('sticky')" id="header-sticky-btn"
+                            class="py-3 rounded-xl text-[10px] font-bold uppercase transition-all">Fijo</button>
+                        <button onclick="setHeaderPosition('relative')" id="header-rel-btn"
+                            class="py-3 rounded-xl text-[10px] font-bold uppercase transition-all">Libre</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- LOGIC V2.0 -->
+    <script src="assets/js/app.js"></script>
+</body>
+
+</html>

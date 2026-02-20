@@ -1,0 +1,23 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE / Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-project
+*.sublime-workspace
+
+# Backups & Temporary files
+*- copia.html
+*copy*.html
+*.tmp
+*.log
+
+# Dependency directories (for future use)
+node_modules/
+dist/
+.env
